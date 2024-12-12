@@ -1,0 +1,40 @@
+[project]
+name = "gwemopt"
+version = "0.1.0"
+description = "Default template for PDM package"
+dependencies = [
+    'numpy>=1.7.1',
+    'scipy>=1.2.1',
+    'matplotlib>=1.2.0',
+    'astropy>=1.1.1',
+    'astropy-healpix',
+    'python-dateutil',
+    'mocpy',
+    'astroquery',
+    'astroplan',
+    'ephem',
+    'pyyaml',
+    'VOEventLib',
+    'joblib',
+    'ligo-segments',
+    'ligo.skymap',
+    'h5py',
+    'munkres',
+    'shapely',
+]
+requires-python = "==3.10.*"
+readme = "README.md"
+license = { text = "MIT" }
+
+[project.optional-dependencies]
+test = ['pytest>=3.1', 'pytest-runner', 'freezegun', 'sqlparse', 'bs4', 'black']
+
+[tool.pdm]
+distribution = false
+
+[tool.setuptools.packages.find]
+namespaces = true
+where = ["gwemopt"]
+
+[tool.setuptools.package-data]
+"data" = ["config/*.config", "input/*", "lightcurves/*/*.dat", "tiling/*.dat"]
