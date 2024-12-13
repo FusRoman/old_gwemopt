@@ -56,7 +56,6 @@ def get_telescope_config(telescope: str) -> dict:
     telescope_config_path = (
         files("gwemopt.data").joinpath("config").joinpath(f"{telescope}.config")
     )
-    print(type(telescope_config_path))
     return readParamsFromFile(telescope_config_path)
 
 
@@ -99,8 +98,7 @@ def get_tesselation_path(telescope: str):
     Traversable
         tiling file path
     """
-    d = files("gwemopt.data").joinpath("input").joinpath(f"{telescope}.tess")
-    return d
+    return files("gwemopt.data").joinpath("input").joinpath(f"{telescope}.tess")
 
 
 def get_reference_path(telescope: str):
