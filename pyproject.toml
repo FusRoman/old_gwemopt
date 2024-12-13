@@ -34,7 +34,7 @@ distribution = false
 
 [tool.setuptools.packages.find]
 namespaces = true
-where = ["gwemopt"]
+where = ["."]
 
 [tool.setuptools.package-data]
 "data" = ["config/*.config", "input/*", "lightcurves/*/*.dat", "tiling/*.dat"]
