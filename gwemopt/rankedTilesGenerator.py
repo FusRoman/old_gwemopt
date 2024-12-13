@@ -48,7 +48,7 @@ from astropy.coordinates import get_moon
 from astropy.coordinates import get_body
 from astropy.coordinates import SkyCoord, EarthLocation, AltAz
 
-from gwemopt.utils import get_tiling_path
+import gwemopt.utils
 import gwemopt.moc
 
 
@@ -61,7 +61,7 @@ def create_ranked(params, map_struct):
         config_struct = params["config"][telescope]
         tesselation = config_struct["tesselation"]
 
-        preComputedFile = get_tiling_path(telescope, nside)
+        preComputedFile = gwemopt.utils.get_tiling_path(telescope, nside)
         if not os.path.isfile(preComputedFile):
             print("Creating tiles file...")
             gwemopt.rankedTilesGenerator.createTileFile(

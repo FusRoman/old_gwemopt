@@ -4,12 +4,10 @@
 import os
 import numpy as np
 import copy
-from astropy.io import fits, ascii
+from astropy.io import ascii
 from astropy import table
 from astropy import time
 
-# from astropy.table import Table
-import gwemopt.utils
 import gwemopt.moc
 import gwemopt.gracedb
 import gwemopt.rankedTilesGenerator
@@ -21,7 +19,8 @@ import gwemopt.plotting
 import gwemopt.tiles
 import gwemopt.segments
 import gwemopt.catalog
-from gwemopt.utils import get_telescope_config
+import gwemopt.utils
+
 
 def Observation_plan_multiple(
     telescopes, eventtime, trigger_id, params, map_struct_input, obs_mode, output_dir
@@ -31,17 +30,21 @@ def Observation_plan_multiple(
 
     event_time = time.Time(eventtime, scale="utc")
 
-    config_directory = params["configDirectory"]
+    # config_directory = params["configDirectory"]
 
     for telescope in telescopes:
-        params["config"][telescope] = get_telescope_config(telescope)
+        print(telescope)
+        params["config"][telescope] = gwemopt.utils.get_telescope_config(telescope)
         params["config"][telescope]["telescope"] = telescope
 
         if "tesselationFile" in params["config"][telescope]:
-            params["config"][telescope]["tesselationFile"] = os.path.join(
-                config_directory, params["config"][telescope]["tesselationFile"]
+            params["config"][telescope]["tesselationFile"] = (
+                gwemopt.utils.get_tesselation_path(
+                    params["config"][telescope]["tesselationFile"]
+                )
             )
             tesselation_file = params["config"][telescope]["tesselationFile"]
+            print(params["config"][telescope])
             if not os.path.isfile(tesselation_file):
                 if params["config"][telescope]["FOV_type"] == "circle":
                     gwemopt.tiles.tesselation_spiral(params["config"][telescope])
@@ -55,8 +58,10 @@ def Observation_plan_multiple(
             )
 
         if "referenceFile" in params["config"][telescope]:
-            params["config"][telescope]["referenceFile"] = os.path.join(
-                config_directory, params["config"][telescope]["referenceFile"]
+            params["config"][telescope]["referenceFile"] = (
+                gwemopt.utils.get_reference_path(
+                    params["config"][telescope]["referenceFile"]
+                )
             )
             refs = table.unique(
                 table.Table.read(

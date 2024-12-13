@@ -37,7 +37,6 @@ import gwemopt.tiles
 import gwemopt.segments
 import gwemopt.scheduler
 from importlib.resources import files
-from importlib.resources.abc import Traversable
 
 
 def get_telescope_config(telescope: str) -> dict:
@@ -57,12 +56,13 @@ def get_telescope_config(telescope: str) -> dict:
     telescope_config_path = (
         files("gwemopt.data").joinpath("config").joinpath(f"{telescope}.config")
     )
+    print(type(telescope_config_path))
     return readParamsFromFile(telescope_config_path)
 
 
-def get_tiling_path(telescope: str, nside: int) -> Traversable:
+def get_tiling_path(telescope: str, nside: int):
     """
-    Get the path of the tiling path
+    Get the path of the tiling file
 
     Parameters
     ----------
@@ -81,6 +81,45 @@ def get_tiling_path(telescope: str, nside: int) -> Traversable:
         .joinpath("tiling")
         .joinpath(f"preComputed_{telescope}_pixel_indices_{nside}.dat")
     )
+
+
+def get_tesselation_path(telescope: str):
+    """
+    Get the path of the tesselation file
+
+    Parameters
+    ----------
+    telescope : str
+        telescope name
+    nside : int
+        nside of the healpix map tile
+
+    Returns
+    -------
+    Traversable
+        tiling file path
+    """
+    d = files("gwemopt.data").joinpath("input").joinpath(f"{telescope}.tess")
+    return d
+
+
+def get_reference_path(telescope: str):
+    """
+    Get the path of the tesselation file
+
+    Parameters
+    ----------
+    telescope : str
+        telescope name
+    nside : int
+        nside of the healpix map tile
+
+    Returns
+    -------
+    Traversable
+        tiling file path
+    """
+    return files("gwemopt.data").joinpath("input").joinpath(f"{telescope}.ref")
 
 
 def readParamsFromFile(file):
