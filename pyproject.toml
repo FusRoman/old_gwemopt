@@ -38,3 +38,7 @@ where = ["."]
 
 [tool.setuptools.package-data]
 "data" = ["config/*.config", "input/*", "lightcurves/*/*.dat", "tiling/*.dat"]
+
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
