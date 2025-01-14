@@ -32,7 +32,7 @@ def observability(params,map_struct):
     cbar=False
 
     for telescope in observability_struct.keys():
-        plotName = os.path.join(params["outputDir"],'observability_%s.pdf'%telescope)
+        plotName = os.path.join(params["outputDir"],'observability_%s.png'%telescope)
         hp.mollview(map_struct["prob"]*observability_struct[telescope]["observability"],title='',unit=unit,cbar=cbar,min=np.min(map_struct["prob"]),max=np.max(map_struct["prob"]),cmap=cmap)
         add_edges()
         plt.show()
@@ -67,7 +67,7 @@ def observability(params,map_struct):
     
 def tauprob(params,tau,prob):
 
-    plotName = os.path.join(params["outputDir"],'tau_prob.pdf')
+    plotName = os.path.join(params["outputDir"],'tau_prob.png')
     plt.figure()
     plt.plot(tau, prob)
     plt.grid()
@@ -84,7 +84,7 @@ def tiles(params,map_struct,tiles_structs):
     unit='Gravitational-wave probability'
     cbar=False
 
-    plotName = os.path.join(params["outputDir"],'tiles.pdf')
+    plotName = os.path.join(params["outputDir"],'tiles.png')
     plt.figure()
     hp.mollview(map_struct["prob"],title='',unit=unit,cbar=cbar,cmap=cmap)
     ax = plt.gca()
@@ -104,7 +104,7 @@ def tiles(params,map_struct,tiles_structs):
     if params["doReferences"]:
 
         rot=(90,0,0)
-        plotName = os.path.join(params["outputDir"],'tiles_ref.pdf')
+        plotName = os.path.join(params["outputDir"],'tiles_ref.png')
         plt.figure()
         hp.mollview(np.zeros(map_struct["prob"].shape),title='',unit=unit,cbar=cbar,cmap=cmap)
         ax = plt.gca()
@@ -152,7 +152,7 @@ def skymap(params,map_struct):
     lons = np.arange(-150.0,180,30.0)
     lats = np.zeros(lons.shape)
 
-    plotName = os.path.join(params["outputDir"],'prob.pdf')
+    plotName = os.path.join(params["outputDir"],'prob.png')
     if np.percentile(map_struct["prob"],99) > 0:
         hp.mollview(map_struct["prob"],title='',unit=unit,cbar=cbar,min=np.percentile(map_struct["prob"],1),max=np.percentile(map_struct["prob"],99),cmap=cmap)
     else:
@@ -165,7 +165,7 @@ def skymap(params,map_struct):
     if "distmu" in map_struct:
         fin = np.copy(map_struct["distmu"])
         fin[~np.isfinite(fin)] = np.nan
-        plotName = os.path.join(params["outputDir"],'dist.pdf')
+        plotName = os.path.join(params["outputDir"],'dist.png')
         hp.mollview(map_struct["distmu"],unit='Distance [Mpc]',min=np.nanpercentile(fin,10),max=np.nanpercentile(fin,90))
         add_edges()
         plt.show()
@@ -174,7 +174,7 @@ def skymap(params,map_struct):
 
         fin = np.copy(map_struct["distmed"])
         fin[~np.isfinite(fin)] = np.nan
-        plotName = os.path.join(params["outputDir"],'dist_median.pdf')
+        plotName = os.path.join(params["outputDir"],'dist_median.png')
         hp.mollview(map_struct["distmed"],unit='Distance [Mpc]',min=np.nanpercentile(fin,10),max=np.nanpercentile(fin,90))
         add_edges()
         plt.show()
@@ -214,7 +214,7 @@ def efficiency(params, map_struct, efficiency_structs):
     unit='Gravitational-wave probability'
     cbar=False
 
-    plotName = os.path.join(params["outputDir"],'efficiency.pdf')
+    plotName = os.path.join(params["outputDir"],'efficiency.png')
     plt.figure()
     for key in efficiency_structs:
         efficiency_struct = efficiency_structs[key]
@@ -227,7 +227,7 @@ def efficiency(params, map_struct, efficiency_structs):
     plt.savefig(plotName,dpi=200)
     plt.close('all')
 
-    plotName = os.path.join(params["outputDir"],'injs.pdf')
+    plotName = os.path.join(params["outputDir"],'injs.png')
     plt.figure()
     plt.plot(efficiency_struct["ra"],efficiency_struct["dec"],'kx')
     plt.xlabel('RA [Degrees]')
@@ -236,7 +236,7 @@ def efficiency(params, map_struct, efficiency_structs):
     plt.savefig(plotName,dpi=200)
     plt.close('all')
 
-    plotName = os.path.join(params["outputDir"],'mollview_injs.pdf')
+    plotName = os.path.join(params["outputDir"],'mollview_injs.png')
     plt.figure()
     hp.mollview(map_struct["prob"],unit=unit,cbar=cbar)
     hp.projplot(efficiency_struct["ra"], efficiency_struct["dec"], 'wx', lonlat=True, coord='G')
@@ -250,7 +250,7 @@ def coverage(params, map_struct, coverage_struct, catalog_struct=None):
     unit='Gravitational-wave probability'
     cbar=False
 
-    plotName = os.path.join(params["outputDir"],'mollview_coverage.pdf')
+    plotName = os.path.join(params["outputDir"],'mollview_coverage.png')
     plt.figure()
     hp.mollview(map_struct["prob"],title='',unit=unit,cbar=cbar,cmap=cmap)
     hp.projplot(coverage_struct["data"][:,0], coverage_struct["data"][:,1], 'wx', lonlat=True, coord='G')
@@ -264,7 +264,7 @@ def coverage(params, map_struct, coverage_struct, catalog_struct=None):
     min_time = np.min(coverage_struct["data"][idx,4])
     max_time = np.max(coverage_struct["data"][idx,4])
 
-    plotName = os.path.join(params["outputDir"],'coverage.pdf')
+    plotName = os.path.join(params["outputDir"],'coverage.png')
     plt.figure(figsize=(10,8))
     ax = plt.gca()
     for ii in range(len(coverage_struct["ipix"])):
@@ -289,7 +289,7 @@ def coverage(params, map_struct, coverage_struct, catalog_struct=None):
     plt.savefig(plotName,dpi=200)
     plt.close('all')
 
-    plotName = os.path.join(params["outputDir"],'tiles_coverage.pdf')
+    plotName = os.path.join(params["outputDir"],'tiles_coverage.png')
     plt.figure()
     hp.mollview(map_struct["prob"],title='',unit=unit,cbar=cbar, cmap=cmap)
     add_edges()
@@ -352,7 +352,7 @@ def coverage(params, map_struct, coverage_struct, catalog_struct=None):
         fid.write('%.10f\n' % diffs[ii])
     fid.close()
 
-    plotName = os.path.join(params["outputDir"],'tiles_coverage_hist.pdf')
+    plotName = os.path.join(params["outputDir"],'tiles_coverage_hist.png')
     fig = plt.figure(figsize=(12, 8))
     #hist, bin_edges = np.histogram(diffs, bins=20)
     bins = np.linspace(0.0, 24.0, 25)
@@ -367,7 +367,7 @@ def coverage(params, map_struct, coverage_struct, catalog_struct=None):
     event_mjd = Time(gpstime, format='gps', scale='utc').mjd
 
     colors=cm.rainbow(np.linspace(0,1,len(params["telescopes"])))
-    plotName = os.path.join(params["outputDir"],'tiles_coverage_int.pdf')
+    plotName = os.path.join(params["outputDir"],'tiles_coverage_int.png')
 
     fig = plt.figure(figsize=(12, 8))
 
@@ -553,7 +553,7 @@ def coverage(params, map_struct, coverage_struct, catalog_struct=None):
     print('Total Cumulative Probability, Area: %.5f, %.5f' % (cum_probs[-1],
                                                               cum_areas[-1]))
 
-    plotName = os.path.join(params["outputDir"],'tiles_coverage_scaled.pdf')
+    plotName = os.path.join(params["outputDir"],'tiles_coverage_scaled.png')
     plt.figure()
     hp.mollview(map_struct["prob"],title='',unit=unit,cbar=cbar,cmap=cmap)
     add_edges()
@@ -647,7 +647,7 @@ def coverage(params, map_struct, coverage_struct, catalog_struct=None):
         os.system(rm_command)
 
 def scheduler(params,exposurelist,keys): 
-    plotName = os.path.join(params["outputDir"],'scheduler.pdf')
+    plotName = os.path.join(params["outputDir"],'scheduler.png')
     if params['scheduleType'].endswith('_slew'):
         e = []
         k = []
@@ -684,7 +684,7 @@ def transients(params, map_struct, transients_struct):
     ra = transients_struct["data"][:,0]
     dec = transients_struct["data"][:,1]
 
-    plotName = os.path.join(params["outputDir"],'transients.pdf')
+    plotName = os.path.join(params["outputDir"],'transients.png')
     plt.figure()
     hp.mollview(map_struct["prob"],unit=unit,cbar=cbar)
     hp.projplot(ra, dec, 'wx', lonlat=True, coord='G')
