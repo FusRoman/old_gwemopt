@@ -21,6 +21,8 @@ dependencies = [
     'h5py',
     'munkres',
     'shapely',
+    "seaborn>=0.13.2",
+    "pyarrow>=19.0.1",
 ]
 requires-python = "==3.10.*"
 readme = "README.md"
@@ -28,6 +30,9 @@ license = { text = "MIT" }
 
 [project.optional-dependencies]
 test = ['pytest>=3.1', 'pytest-runner', 'freezegun', 'sqlparse', 'bs4', 'black']
+dev = [
+    "black>=25.1.0",
+]
 
 [tool.pdm]
 distribution = false
