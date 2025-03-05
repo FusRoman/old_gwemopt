@@ -63,6 +63,22 @@ def galaxy(params, map_struct, catalog_struct):
         else:
             FoV_center = params["config"][telescope]['FOV'] * params['galaxies_FoV_sep']
 
+        # Take account of the FoV edge effect
+        if 'FOV_edge' in params["config"][telescope]:
+            FoV_edge = params["config"][telescope]["FOV_edge"]
+        else:
+            FoV_edge = 1.
+
+        # Same for FoV_center edge effect
+        if 'FOV_center_edge' in params["config"][telescope]:
+            FoV_center_edge = params["config"][telescope]["FOV_center_edge"]
+        else:
+            FoV_center_edge = 1.
+
+        # Apply the edge effects
+        FoV        *= FoV_edge
+        FoV_center *= FoV_center_edge 
+
         new_ra = []
         new_dec = []
         new_Sloc = []

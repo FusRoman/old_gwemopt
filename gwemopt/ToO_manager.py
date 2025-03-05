@@ -20,6 +20,10 @@ import gwemopt.tiles
 import gwemopt.segments
 import gwemopt.catalog
 import gwemopt.utils
+from gwemopt.multi_fov.post_processing import (
+    cluster_data,
+    sequence_all_clusters,
+)
 
 
 def Observation_plan_multiple(
@@ -30,10 +34,12 @@ def Observation_plan_multiple(
 
     event_time = time.Time(eventtime, scale="utc")
 
-    # config_directory = params["configDirectory"]
+    if len(params["max_nb_tiles"]) != len(telescopes):
+        raise Exception(
+            "The number of telescopes is differents from the number of requested tiles per telescope"
+        )
 
     for telescope in telescopes:
-        print(telescope)
         params["config"][telescope] = gwemopt.utils.get_telescope_config(telescope)
         params["config"][telescope]["telescope"] = telescope
 
@@ -91,9 +97,7 @@ def Observation_plan_multiple(
         params["tilesType"] = "moc"
         params["scheduleType"] = "greedy"
         params["timeallocationType"] = "powerlaw"
-        # params["doCatalog"] = False
     elif obs_mode == "Galaxy targeting":
-        # params["tilesType"] = "hierarchical"
         params["tilesType"] = "galaxy"
         params["scheduleType"] = "greedy"
         params["timeallocationType"] = "powerlaw"
@@ -215,8 +219,6 @@ def Observation_plan_multiple(
 
         config_struct = params["config"][telescope]
 
-        # table_field = utilityTable(thistable)
-        # table_field.blankTable(len(coverage_struct))
         field_id_vec = []
         ra_vec = []
         dec_vec = []
@@ -225,25 +227,19 @@ def Observation_plan_multiple(
 
         for ii in range(len(coverage_struct["ipix"])):
             data = coverage_struct["data"][ii, :]
-            filt = coverage_struct["filters"][ii]
             ipix = coverage_struct["ipix"][ii]
-            patch = coverage_struct["patch"][ii]
-            FOV = coverage_struct["FOV"][ii]
-            area = coverage_struct["area"][ii]
 
             if not telescope == coverage_struct["telescope"][ii]:
                 continue
 
             prob = np.sum(map_struct["prob"][ipix])
-            # prob = tile_structs[telescope][ii]["prob"]
 
             ra, dec = data[0], data[1]
-            # exposure_time, field_id, prob = data[4], data[5], data[6]
-            exposure_time, field_id = data[4], data[5]
+            field_id = data[5]
             field_id_vec.append(int(field_id))
-            ra_vec.append(np.round(ra, 4))
-            dec_vec.append(np.round(dec, 4))
-            grade_vec.append(np.round(prob, 4))
+            ra_vec.append(ra)
+            dec_vec.append(dec)
+            grade_vec.append(prob)
 
         # Store observation in database only if there are tiles
         if field_id_vec:
@@ -263,29 +259,42 @@ def Observation_plan_multiple(
             # Formatting data
 
             # Create an array indicating descing order of probability
-            if telescope in ["GWAC", "F30", "CGFT"]:
-                print("tel : " + telescope)
-                tessfile = np.loadtxt(config_struct["tesselationFile"])
-                for i in range(len(field_id_vec)):
-                    # rank_id.append(str(int(params["config"][telescope]["tesselation"][field_id_vec[i]][0])).zfill(8))
-                    # print("field RA Dec "+str(int(params["config"][telescope]["tesselation"][field_id_vec[i]][0]))+" "+str(ra_vec[i])+" "+str(dec_vec[i]))
-                    # need to find indices myslef
-                    rows = np.where(tessfile[:, 1] == ra_vec[i])
-                    #                    r2 = np.where(tessfile[rows,2]==dec_vec[i])
-                    #                    f_id = tessfile[rows[r2[0][0]][0]][0]
-                    r2 = np.where(tessfile[rows, 2][0] == dec_vec[i])
-                    f_id = tessfile[rows[0][r2[0][0]]][0]
-                    rank_id.append(str(int(f_id)).zfill(8))
-            else:
-                rank_id = np.arange(len(field_id_vec)) + 1
+            # if telescope in ["GWAC", "F30", "CGFT"]:
+            #     print("tel : " + telescope)
+            #     tessfile = np.loadtxt(config_struct["tesselationFile"])
+            #     print()
+            #     print()
+            #     print(coverage_struct["telescope"][ii])
+            #     print()
+            #     print(data)
+            #     print()
+            #     print(tessfile)
+            #     print()
+            #     print(ra_vec)
+            #     print()
+            #     print(dec_vec)
+            #     print("----")
+            #     print()
+            #     print()
+            #     for i in range(len(field_id_vec)):
+            #         # need to find indices myslef
+            #         rows = np.where(tessfile[:, 1] == ra_vec[i])
+            #         print()
+            #         print(rows)
+            #         r2 = np.where(tessfile[rows, 2][0] == dec_vec[i])
+            #         print(r2)
+            #         print()
+            #         f_id = tessfile[rows[0][r2[0][0]]][0]
+            #         rank_id.append(str(int(f_id)).zfill(8))
+            # else:
+
+            rank_id = np.arange(len(field_id_vec)) + 1
 
             # Get each tile corners in RA, DEC
             tiles_corners_str = []
             tiles_corners_list = []
             for tile_id in field_id_vec:
                 unsorted_corners = tile_structs[telescope][tile_id]["corners"]
-                # print (unsorted_corners.shape[0])
-
                 try:
                     if unsorted_corners.shape[0] == 1:
                         sorted_corners_str = "[[%.3f, %.3f]]" % (
@@ -411,5 +420,23 @@ def Observation_plan_multiple(
         filename_gal = params["outputDir"] + "/catalog.csv"
 
         galaxies_table = ascii.read(filename_gal, format="csv")
+
+    print()
+    print(tiles_tables)
+    print()
+
+    # do post-processing optimisation
+    for tel in telescopes:
+        mxt_table = tiles_tables[tel]
+        names = [name for name in mxt_table.colnames if len(mxt_table[name].shape) <= 1]
+        tiles_pdf = mxt_table[names].to_pandas()
+        tiles_pdf["prob_sum"] = tiles_pdf["Prob"].to_numpy().cumsum()
+        tiles = cluster_data(tiles_pdf, threshold=5.0, start=0)
+
+        slew_constraint = 5.0  # deg
+        sequence_all_clusters(
+            tiles, slew_constraint=slew_constraint, doOptimization=False, save=False
+        )
+        tiles_tables[tel] = table.Table.from_pandas(tiles)
 
     return tiles_tables, galaxies_table
