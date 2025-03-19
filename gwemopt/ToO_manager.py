@@ -428,15 +428,16 @@ def Observation_plan_multiple(
     # do post-processing optimisation
     for tel in telescopes:
         mxt_table = tiles_tables[tel]
-        names = [name for name in mxt_table.colnames if len(mxt_table[name].shape) <= 1]
-        tiles_pdf = mxt_table[names].to_pandas()
-        tiles_pdf["prob_sum"] = tiles_pdf["Prob"].to_numpy().cumsum()
-        tiles = cluster_data(tiles_pdf, threshold=5.0, start=0)
+        if mxt_table:
+            names = [name for name in mxt_table.colnames if len(mxt_table[name].shape) <= 1]
+            tiles_pdf = mxt_table[names].to_pandas()
+            tiles_pdf["prob_sum"] = tiles_pdf["Prob"].to_numpy().cumsum()
+            tiles = cluster_data(tiles_pdf, threshold=5.0, start=0)
 
-        slew_constraint = 5.0  # deg
-        sequence_all_clusters(
-            tiles, slew_constraint=slew_constraint, doOptimization=False, save=False
-        )
-        tiles_tables[tel] = table.Table.from_pandas(tiles)
+            slew_constraint = 5.0  # deg
+            sequence_all_clusters(
+                tiles, slew_constraint=slew_constraint, doOptimization=False, save=False
+            )
+            tiles_tables[tel] = table.Table.from_pandas(tiles)
 
     return tiles_tables, galaxies_table
