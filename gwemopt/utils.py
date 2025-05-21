@@ -508,11 +508,28 @@ def rotate_map(hmap, rot_theta, rot_phi):
     return rot_map
 
 
-def read_skymap(params, is3D=False, map_struct=None):
+def read_skymap(params, is3D=False, map_struct=None, flat_skymap=None):
 
     header = []
     if map_struct is None:
         map_struct = {}
+
+        if flat_skymap is not None:
+            # Accept flat dict with keys like "PROBDENSITY", "DISTMU", etc.
+            prob_data = flat_skymap["PROBDENSITY"]
+            prob_data = prob_data / np.sum(prob_data)
+            map_struct["prob"] = prob_data
+
+            # Handle 3D optional components
+            if all(k in flat_skymap for k in ["DISTMU", "DISTSIGMA", "DISTNORM"]):
+                map_struct["distmu"] = np.asarray(flat_skymap["DISTMU"])
+                map_struct["distsigma"] = np.asarray(flat_skymap["DISTSIGMA"])
+                map_struct["distnorm"] = np.asarray(flat_skymap["DISTNORM"])
+                is3D = True
+            else:
+                map_struct["distmu"] = None
+                map_struct["distsigma"] = None
+                map_struct["distnorm"] = None
 
         if params["doDatabase"]:
             models = params["models"]
