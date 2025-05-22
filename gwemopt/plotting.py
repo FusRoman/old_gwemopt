@@ -18,8 +18,6 @@ from gwemopt.segments import angular_distance
 import gwemopt.coverage
 import gwemopt.utils
 
-from matplotlib.patches import Polygon
-
 try:
     import ligo.skymap.plot
 
@@ -47,6 +45,7 @@ def observability(params, map_struct):
             cmap=cmap,
         )
         add_edges()
+        plt.show()
         plt.savefig(plotName, dpi=200)
         plt.close("all")
 
@@ -70,7 +69,7 @@ def observability(params, map_struct):
                     cmap=cmap,
                 )
                 add_edges()
-
+                plt.show()
                 plt.savefig(plotName, dpi=200)
                 plt.close("all")
 
@@ -109,7 +108,7 @@ def tauprob(params, tau, prob):
     plt.ylabel(
         "Log of detection prob. given the target is at the observing field", fontsize=20
     )
-
+    plt.show()
     plt.savefig(plotName, dpi=200)
     plt.close("all")
 
@@ -137,7 +136,7 @@ def tiles(params, map_struct, tiles_structs):
             hp.projaxes.HpxMollweideAxes.add_patch(ax, patch)
             # tiles.plot()
     add_edges()
-
+    plt.show()
     plt.savefig(plotName, dpi=200)
     plt.close("all")
 
@@ -176,13 +175,14 @@ def tiles(params, map_struct, tiles_structs):
                 # hp.visufunc.projplot(corners[:,0], corners[:,1], 'k', lonlat = True)
                 if not patch:
                     continue
-                patch_cpy = copy.deepcopy(patch)
-
+                patch_cpy = copy.copy(patch)
+                patch_cpy.axes = None
+                patch_cpy.figure = None
                 patch_cpy.set_transform(ax.transData)
                 hp.projaxes.HpxMollweideAxes.add_patch(ax, patch_cpy)
                 # tiles.plot()
         add_edges()
-
+        plt.show()
         plt.savefig(plotName, dpi=200)
         plt.close("all")
 
@@ -230,7 +230,7 @@ def skymap(params, map_struct):
             cmap=cmap,
         )
     add_edges()
-
+    plt.show()
     plt.savefig(plotName, dpi=200)
     plt.close("all")
 
@@ -245,7 +245,7 @@ def skymap(params, map_struct):
             max=np.nanpercentile(fin, 90),
         )
         add_edges()
-
+        plt.show()
         plt.savefig(plotName, dpi=200)
         plt.close("all")
 
@@ -259,7 +259,7 @@ def skymap(params, map_struct):
             max=np.nanpercentile(fin, 90),
         )
         add_edges()
-
+        plt.show()
         plt.savefig(plotName, dpi=200)
         plt.close("all")
 
@@ -281,7 +281,7 @@ def waw(params, detmaps, t_detmaps, strategy_struct):
                 detmap, title=title, min=0.0, max=1.0, unit="Probability of Detection"
             )
             add_edges()
-
+            plt.show()
             plt.savefig(plotName, dpi=200)
             plt.close("all")
 
@@ -322,7 +322,7 @@ def efficiency(params, map_struct, efficiency_structs):
     plt.ylabel("Efficiency")
     plt.legend(loc="best")
     plt.ylim([0.01, 1])
-
+    plt.show()
     plt.savefig(plotName, dpi=200)
     plt.close("all")
 
@@ -331,7 +331,7 @@ def efficiency(params, map_struct, efficiency_structs):
     plt.plot(efficiency_struct["ra"], efficiency_struct["dec"], "kx")
     plt.xlabel("RA [Degrees]")
     plt.ylabel("Declination [Degrees]")
-
+    plt.show()
     plt.savefig(plotName, dpi=200)
     plt.close("all")
 
@@ -342,24 +342,13 @@ def efficiency(params, map_struct, efficiency_structs):
         efficiency_struct["ra"], efficiency_struct["dec"], "wx", lonlat=True, coord="G"
     )
     add_edges()
-
+    plt.show()
     plt.savefig(plotName, dpi=200)
     plt.close("all")
 
 
-def clone_patch(patch):
-    verts = patch.get_path().vertices
-    transform = patch.get_patch_transform()
-    transformed_verts = transform.transform(verts)
-
-    new_patch = Polygon(transformed_verts, closed=True)
-    new_patch.set_facecolor(patch.get_facecolor())
-    new_patch.set_alpha(patch.get_alpha())
-    new_patch.set_edgecolor(patch.get_edgecolor())
-
-    return new_patch
-
 def coverage(params, map_struct, coverage_struct, catalog_struct=None):
+
     unit = "Gravitational-wave probability"
     cbar = False
 
@@ -374,6 +363,7 @@ def coverage(params, map_struct, coverage_struct, catalog_struct=None):
         coord="G",
     )
     add_edges()
+    plt.show()
     plt.savefig(plotName, dpi=200)
     plt.close("all")
 
@@ -383,18 +373,54 @@ def coverage(params, map_struct, coverage_struct, catalog_struct=None):
     min_time = np.min(coverage_struct["data"][idx, 4])
     max_time = np.max(coverage_struct["data"][idx, 4])
 
+    plotName = os.path.join(params["outputDir"], "coverage.png")
+    plt.figure(figsize=(10, 8))
+    ax = plt.gca()
+    for ii in range(len(coverage_struct["ipix"])):
+        data = coverage_struct["data"][ii, :]
+        filt = coverage_struct["filters"][ii]
+        ipix = coverage_struct["ipix"][ii]
+        patch = coverage_struct["patch"][ii]
+        FOV = coverage_struct["FOV"][ii]
+
+        if filt == "g":
+            color = "g"
+        elif filt == "r":
+            color = "r"
+        else:
+            color = "k"
+
+        plt.scatter(data[2], data[5], s=20, color=color)
+
+    plt.xlabel("Time [MJD]")
+    plt.ylabel("Tile Number")
+    plt.show()
+    plt.savefig(plotName, dpi=200)
+    plt.close("all")
+
     plotName = os.path.join(params["outputDir"], "tiles_coverage.png")
     plt.figure()
     hp.mollview(map_struct["prob"], title="", unit=unit, cbar=cbar, cmap=cmap)
     add_edges()
     ax = plt.gca()
     for ii in range(len(coverage_struct["ipix"])):
+        data = coverage_struct["data"][ii, :]
+        filt = coverage_struct["filters"][ii]
+        ipix = coverage_struct["ipix"][ii]
         patch = coverage_struct["patch"][ii]
+        FOV = coverage_struct["FOV"][ii]
+
+        # hp.visufunc.projplot(corners[:,0], corners[:,1], 'k', lonlat = True)
         if patch == []:
             continue
-        new_patch = clone_patch(patch)
-        new_patch.set_transform(ax.transData)
-        hp.projaxes.HpxMollweideAxes.add_patch(ax, new_patch)
+
+        patch_cpy = copy.copy(patch)
+        patch_cpy.axes = None
+        patch_cpy.figure = None
+        patch_cpy.set_transform(ax.transData)
+        hp.projaxes.HpxMollweideAxes.add_patch(ax, patch_cpy)
+        # tiles.plot()
+    plt.show()
     plt.savefig(plotName, dpi=200)
     plt.close("all")
 
@@ -444,18 +470,221 @@ def coverage(params, map_struct, coverage_struct, catalog_struct=None):
                     )
 
     filename = os.path.join(params["outputDir"], "tiles_coverage_hist.dat")
-    with open(filename, "w") as fid:
-        for val in diffs:
-            fid.write("%.10f\n" % val)
+    fid = open(filename, "w")
+    for ii in range(len(diffs)):
+        fid.write("%.10f\n" % diffs[ii])
+    fid.close()
 
     plotName = os.path.join(params["outputDir"], "tiles_coverage_hist.png")
-    plt.figure(figsize=(12, 8))
+    fig = plt.figure(figsize=(12, 8))
+    # hist, bin_edges = np.histogram(diffs, bins=20)
     bins = np.linspace(0.0, 24.0, 25)
     plt.hist(24.0 * np.array(diffs), bins=bins)
     plt.xlabel("Difference Between Observations [hours]")
     plt.ylabel("Number of Observations")
+    plt.show()
     plt.savefig(plotName, dpi=200)
     plt.close("all")
+
+    gpstime = params["gpstime"]
+    event_mjd = Time(gpstime, format="gps", scale="utc").mjd
+
+    colors = cm.rainbow(np.linspace(0, 1, len(params["telescopes"])))
+    plotName = os.path.join(params["outputDir"], "tiles_coverage_int.png")
+
+    fig = plt.figure(figsize=(12, 8))
+
+    gs = fig.add_gridspec(4, 1)
+    ax1 = fig.add_subplot(gs[0:3, 0], projection="astro hours mollweide")
+    ax2 = fig.add_subplot(gs[3, 0])
+    ax3 = ax2.twinx()  # mirror them
+
+    plt.axes(ax1)
+    hp.mollview(
+        map_struct["prob"], title="", unit=unit, cbar=cbar, cmap=cmap, hold=True
+    )
+    add_edges()
+    ax = plt.gca()
+    data = {}
+
+    if params["tilesType"] == "galaxy":
+        for telescope, color in zip(params["telescopes"], colors):
+            idx = np.where(coverage_struct["telescope"] == telescope)[0]
+            hp.projscatter(
+                coverage_struct["data"][idx, 0],
+                coverage_struct["data"][idx, 1],
+                lonlat=True,
+                s=10,
+                color=color,
+            )
+    else:
+        for ii in range(len(coverage_struct["ipix"])):
+            data = coverage_struct["data"][ii, :]
+            filt = coverage_struct["filters"][ii]
+            ipix = coverage_struct["ipix"][ii]
+            patch = coverage_struct["patch"][ii]
+            FOV = coverage_struct["FOV"][ii]
+
+            idx = params["telescopes"].index(coverage_struct["telescope"][ii])
+
+            if patch == []:
+                continue
+            # hp.visufunc.projplot(corners[:,0], corners[:,1], 'k', lonlat = True)
+            patch_cpy = copy.copy(patch)
+            patch_cpy.axes = None
+            patch_cpy.figure = None
+            patch_cpy.set_transform(ax.transData)
+            patch_cpy.set_facecolor(colors[idx])
+
+            hp.projaxes.HpxMollweideAxes.add_patch(ax, patch_cpy)
+            # tiles.plot()
+
+    idxs = np.argsort(coverage_struct["data"][:, 2])
+    plt.axes(ax2)
+    for telescope, color in zip(params["telescopes"], colors):
+        ipixs = np.empty((0, 2))
+        cum_prob = 0.0
+        cum_area = 0.0
+
+        tts, cum_probs, cum_areas = [], [], []
+        if params["tilesType"] == "galaxy":
+            cum_galaxies = []
+
+        for jj, ii in enumerate(idxs):
+            if np.mod(jj, 100) == 0:
+                print("%s: %d/%d" % (telescope, jj, len(idxs)))
+
+            data = coverage_struct["data"][ii, :]
+            filt = coverage_struct["filters"][ii]
+            ipix = coverage_struct["ipix"][ii]
+            patch = coverage_struct["patch"][ii]
+            FOV = coverage_struct["FOV"][ii]
+            area = coverage_struct["area"][ii]
+            if params["tilesType"] == "galaxy":
+                galaxies = coverage_struct["galaxies"][ii]
+
+            if not telescope == coverage_struct["telescope"][ii]:
+                continue
+
+            if params["tilesType"] == "galaxy":
+                overlap = np.setdiff1d(galaxies, cum_galaxies)
+                if len(overlap) > 0:
+                    for galaxy in galaxies:
+                        if galaxy in cum_galaxies:
+                            continue
+                        if catalog_struct is None:
+                            continue
+                        if params["galaxy_grade"] == "Sloc":
+                            cum_prob = cum_prob + catalog_struct["Sloc"][galaxy]
+                        elif params["galaxy_grade"] == "S":
+                            cum_prob = cum_prob + catalog_struct["S"][galaxy]
+                    cum_galaxies = np.append(cum_galaxies, galaxies)
+                    cum_galaxies = np.unique(cum_galaxies).astype(int)
+                cum_area = len(cum_galaxies)
+            else:
+                ipixs = np.append(ipixs, ipix)
+                ipixs = np.unique(ipixs).astype(int)
+
+                cum_prob = np.sum(map_struct["prob"][ipixs])
+                cum_area = len(ipixs) * map_struct["pixarea_deg2"]
+
+            cum_probs.append(cum_prob)
+            cum_areas.append(cum_area)
+            tts.append(data[2] - event_mjd)
+
+        ax2.plot(tts, cum_probs, color=color, linestyle="-", label=telescope)
+        ax3.plot(tts, cum_areas, color=color, linestyle="--")
+
+    ax2.set_xlabel("Time since event [days]")
+    if params["tilesType"] == "galaxy":
+        ax2.set_ylabel("Integrated Metric")
+    else:
+        ax2.set_ylabel("Integrated Probability")
+
+    if params["tilesType"] == "galaxy":
+        ax3.set_ylabel("Number of galaxies")
+    else:
+        ax3.set_ylabel("Sky area [sq. deg.]")
+
+    ipixs = np.empty((0, 2))
+    cum_prob = 0.0
+    cum_area = 0.0
+
+    tts, cum_probs, cum_areas = [], [], []
+    if params["tilesType"] == "galaxy":
+        cum_galaxies = []
+
+    for jj, ii in enumerate(idxs):
+        data = coverage_struct["data"][ii, :]
+        filt = coverage_struct["filters"][ii]
+        ipix = coverage_struct["ipix"][ii]
+        patch = coverage_struct["patch"][ii]
+        FOV = coverage_struct["FOV"][ii]
+        area = coverage_struct["area"][ii]
+        if params["tilesType"] == "galaxy":
+            galaxies = coverage_struct["galaxies"][ii]
+
+        if params["tilesType"] == "galaxy":
+            overlap = np.setdiff1d(galaxies, cum_galaxies)
+            if len(overlap) > 0:
+                for galaxy in galaxies:
+                    if galaxy in cum_galaxies:
+                        continue
+                    if catalog_struct is None:
+                        continue
+                    if params["galaxy_grade"] == "Sloc":
+                        cum_prob = cum_prob + catalog_struct["Sloc"][galaxy]
+                    elif params["galaxy_grade"] == "S":
+                        cum_prob = cum_prob + catalog_struct["S"][galaxy]
+                cum_galaxies = np.append(cum_galaxies, galaxies)
+                cum_galaxies = np.unique(cum_galaxies).astype(int)
+            cum_area = len(cum_galaxies)
+        else:
+            ipixs = np.append(ipixs, ipix)
+            ipixs = np.unique(ipixs).astype(int)
+
+            cum_prob = np.sum(map_struct["prob"][ipixs])
+            cum_area = len(ipixs) * map_struct["pixarea_deg2"]
+
+        tts.append(data[2] - event_mjd)
+        cum_probs.append(cum_prob)
+        cum_areas.append(cum_area)
+
+    ax2.plot(tts, cum_probs, color="k", linestyle="-", label="All")
+    ax3.plot(tts, cum_areas, color="k", linestyle="--")
+
+    if len(params["telescopes"]) > 3:
+        ax2.legend(loc=1, ncol=3, fontsize=10)
+        ax2.set_ylim([0, 1])
+        ax3.set_ylim([0, 2000])
+    elif "IRIS" in params["telescopes"]:
+        ax2.set_ylim([0, 0.3])
+        ax3.set_ylim([0, 1200])
+        ax2.legend(loc=1)
+    elif "ZTF" in params["telescopes"]:
+        ax2.set_ylim([0, 0.6])
+        ax3.set_ylim([0, 6000])
+        ax2.legend(loc=1)
+    elif "PS1" in params["telescopes"]:
+        ax2.set_ylim([0, 0.6])
+        ax3.set_ylim([0, 6000])
+        ax2.legend(loc=1)
+    else:
+        ax2.legend(loc=1)
+    plt.show()
+    plt.savefig(plotName, dpi=200)
+    plt.close("all")
+
+    filename = os.path.join(params["outputDir"], "tiles_coverage_int.dat")
+    fid = open(filename, "w")
+    for ii in range(len(tts)):
+        fid.write("%.10f %.10e %.10f\n" % (tts[ii], cum_probs[ii], cum_areas[ii]))
+    fid.close()
+
+    print(
+        "Total Cumulative Probability, Area: %.5f, %.5f"
+        % (cum_probs[-1], cum_areas[-1])
+    )
 
     plotName = os.path.join(params["outputDir"], "tiles_coverage_scaled.png")
     plt.figure()
@@ -464,14 +693,29 @@ def coverage(params, map_struct, coverage_struct, catalog_struct=None):
     ax = plt.gca()
     for ii in range(len(coverage_struct["ipix"])):
         data = coverage_struct["data"][ii, :]
+        filt = coverage_struct["filters"][ii]
+        ipix = coverage_struct["ipix"][ii]
         patch = coverage_struct["patch"][ii]
+        FOV = coverage_struct["FOV"][ii]
+
         if patch == []:
             continue
-        new_patch = clone_patch(patch)
-        new_patch.set_transform(ax.transData)
-        alpha = data[4] / max_time if max_time else 1.0
-        new_patch.set_alpha(min(alpha, 1.0))
-        hp.projaxes.HpxMollweideAxes.add_patch(ax, new_patch)
+
+        # hp.visufunc.projplot(corners[:,0], corners[:,1], 'k', lonlat = True)
+        patch_cpy = copy.copy(patch)
+        patch_cpy.axes = None
+        patch_cpy.figure = None
+        patch_cpy.set_transform(ax.transData)
+        current_alpha = patch_cpy.get_alpha()
+
+        if current_alpha > 0.0:
+            alpha = data[4] / max_time
+            if alpha > 1:
+                alpha = 1.0
+            patch_cpy.set_alpha(alpha)
+        hp.projaxes.HpxMollweideAxes.add_patch(ax, patch_cpy)
+        # tiles.plot()
+    plt.show()
     plt.savefig(plotName, dpi=200)
     plt.close("all")
 
@@ -486,32 +730,64 @@ def coverage(params, map_struct, coverage_struct, catalog_struct=None):
         if not os.path.isdir(moviedir):
             os.mkdir(moviedir)
 
-        for jj, mjd in enumerate(mjds):
-            plotName = os.path.join(moviedir, f"coverage-{jj:04d}.png")
-            title = f"Coverage Map: {mjd:.2f}"
+        # for jj in range(len(coverage_struct["ipix"])):
+        #    mjd = coverage_struct["data"][jj,3]
+        for jj in range(len(mjds)):
+            mjd = mjds[jj]
+            plotName = os.path.join(moviedir, "coverage-%04d.png" % jj)
+            title = "Coverage Map: %.2f" % mjd
+
             plt.figure()
-            hp.mollview(map_struct["prob"], title=title, unit=unit, cbar=cbar, cmap=cmap)
+            hp.mollview(
+                map_struct["prob"], title=title, unit=unit, cbar=cbar, cmap=cmap
+            )
             add_edges()
             ax = plt.gca()
 
             idx = np.where(coverage_struct["data"][:, 2] <= mjd)[0]
+            # for ii in range(jj):
             for ii in idx:
+                data = coverage_struct["data"][ii, :]
+                filt = coverage_struct["filters"][ii]
+                ipix = coverage_struct["ipix"][ii]
                 patch = coverage_struct["patch"][ii]
+                FOV = coverage_struct["FOV"][ii]
+
                 if patch == []:
                     continue
-                new_patch = clone_patch(patch)
-                new_patch.set_transform(ax.transData)
-                hp.projaxes.HpxMollweideAxes.add_patch(ax, new_patch)
 
+                # hp.visufunc.projplot(corners[:,0], corners[:,1], 'k', lonlat = True)
+                patch_cpy = copy.copy(patch)
+                patch_cpy.axes = None
+                patch_cpy.figure = None
+                patch_cpy.set_transform(ax.transData)
+                # alpha = data[4]/max_time
+                # if alpha > 1:
+                #    alpha = 1.0
+                # patch_cpy.set_alpha(alpha)
+                hp.projaxes.HpxMollweideAxes.add_patch(ax, patch_cpy)
+                # tiles.plot()
+            plt.show()
             plt.savefig(plotName, dpi=200)
             plt.close("all")
 
         moviefiles = os.path.join(moviedir, "coverage-%04d.png")
-        out_movie = os.path.join(params["outputDir"], "coverage.mpg")
-        out_gif = os.path.join(params["outputDir"], "coverage.gif")
-        os.system(f"ffmpeg -an -y -r 20 -i {moviefiles} -b:v 5000k {out_movie}")
-        os.system(f"ffmpeg -an -y -r 20 -i {moviefiles} -b:v 5000k {out_gif}")
-        os.system(f"rm {moviedir}/*.png")
+        filename = os.path.join(params["outputDir"], "coverage.mpg")
+        ffmpeg_command = "ffmpeg -an -y -r 20 -i %s -b:v %s %s" % (
+            moviefiles,
+            "5000k",
+            filename,
+        )
+        os.system(ffmpeg_command)
+        filename = os.path.join(params["outputDir"], "coverage.gif")
+        ffmpeg_command = "ffmpeg -an -y -r 20 -i %s -b:v %s %s" % (
+            moviefiles,
+            "5000k",
+            filename,
+        )
+        os.system(ffmpeg_command)
+        rm_command = "rm %s/*.png" % (moviedir)
+        os.system(rm_command)
 
 
 def scheduler(params, exposurelist, keys):
@@ -540,7 +816,7 @@ def scheduler(params, exposurelist, keys):
         plt.xlabel("Exposure Number")
         plt.ylabel("Tile Number")
         plt.plot(xs, ys, "kx")
-
+    plt.show()
     plt.savefig(plotName, dpi=200)
     plt.close("all")
 
@@ -558,7 +834,7 @@ def transients(params, map_struct, transients_struct):
     hp.mollview(map_struct["prob"], unit=unit, cbar=cbar)
     hp.projplot(ra, dec, "wx", lonlat=True, coord="G")
     add_edges()
-
+    plt.show()
     plt.savefig(plotName, dpi=200)
     plt.close("all")
 
@@ -620,8 +896,9 @@ def doMovie_supersched(params, coverage_structs, tile_structs, map_struct):
                 continue
 
             # hp.visufunc.projplot(corners[:,0], corners[:,1], 'k', lonlat = True)
-            patch_cpy = copy.deepcopy(patch)
-
+            patch_cpy = copy.copy(patch)
+            patch_cpy.axes = None
+            patch_cpy.figure = None
             patch_cpy.set_transform(ax.transData)
 
             # alpha = data[4]/max_time
@@ -656,11 +933,13 @@ def doMovie_supersched(params, coverage_structs, tile_structs, map_struct):
                             patch = prev_tile_struct[field_id]["patch"]
                             if patch == []:
                                 continue
-                            patch_cpy = copy.deepcopy(patch)
-
+                            patch_cpy = copy.copy(patch)
+                            patch_cpy.axes = None
+                            patch_cpy.figure = None
                             patch_cpy.set_transform(ax.transData)
                             patch_cpy.set_facecolor("white")
                             hp.projaxes.HpxMollweideAxes.add_patch(ax, patch_cpy)
 
+        plt.show()
         plt.savefig(plotName, dpi=200)
         plt.close("all")
