@@ -5,7 +5,7 @@ description = "Default template for PDM package"
 dependencies = [
     'numpy>=1.7.1',
     'scipy>=1.2.1',
-    'matplotlib>=1.2.0',
+    "matplotlib(>=3.9,<3.10)",
     'astropy>=1.1.1',
     'astropy-healpix',
     'python-dateutil',
@@ -24,7 +24,7 @@ dependencies = [
     "seaborn>=0.13.2",
     "pyarrow>=19.0.1",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 readme = "README.md"
 license = { text = "MIT" }
 
