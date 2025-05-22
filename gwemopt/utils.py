@@ -531,7 +531,7 @@ def read_skymap(params, is3D=False, map_struct=None, flat_skymap=None):
                 map_struct["distsigma"] = None
                 map_struct["distnorm"] = None
 
-        if params["doDatabase"]:
+        elif params["doDatabase"]:
             models = params["models"]
             localizations_all = models.Localization.query.all()
             localizations = models.Localization.query.filter_by(
