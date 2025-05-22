@@ -44,7 +44,6 @@ import datetime
 from astropy.time import Time
 from astropy import units as u
 from astropy.coordinates import get_sun
-from astropy.coordinates import get_moon
 from astropy.coordinates import get_body
 from astropy.coordinates import SkyCoord, EarthLocation, AltAz
 
@@ -766,7 +765,7 @@ class Scheduler(RankedTileGenerator):
                             Sun = get_sun(Time(eventTime, format="gps"))
                             sun_ra.append(Sun.ra.value)
                             sun_dec.append(Sun.dec.value)
-                            Moon = get_moon(Time(eventTime, format="gps"))
+                            Moon = get_body("moon", Time(eventTime, format="gps"))
                             sunMoonAngle = Sun.separation(Moon)
                             phaseAngle = np.arctan2(
                                 Sun.distance * np.sin(sunMoonAngle),
