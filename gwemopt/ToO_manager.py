@@ -25,10 +25,45 @@ from gwemopt.multi_fov.post_processing import (
     sequence_all_clusters,
 )
 
+from astropy.time import Time
+
 
 def Observation_plan_multiple(
-    telescopes, eventtime, trigger_id, params, map_struct_input, obs_mode, output_dir
-):
+    telescopes: list[str],
+    eventtime: str,
+    trigger_id: str,
+    params: dict,
+    map_struct_input: dict,
+    obs_mode: str,
+    output_dir: str,
+) -> tuple[dict, table.Table]:
+    """
+    Function to create the observation plan for multiple telescopes
+
+    Parameters
+    ----------
+    telescopes : list
+        List of telescope names
+    eventtime : str
+        Event time in ISO format
+    trigger_id : str
+        Trigger ID
+    params : dict
+        Dictionary containing the parameters for the observation plan
+    map_struct_input : dict
+        Dictionary containing the skymap structure
+    obs_mode : str
+        Observation mode (Tiling, Galaxy targeting, etc.)
+    output_dir : str
+        Output directory for the observation plan
+
+    Returns
+    -------
+    tiles_tables : dict
+        Dictionary containing the observation plan for each telescope
+    galaxies_table : astropy.table.Table
+        Table containing the galaxies information
+    """
     tobs = None
     map_struct = copy.deepcopy(map_struct_input)
 
@@ -224,6 +259,7 @@ def Observation_plan_multiple(
         dec_vec = []
         grade_vec = []
         rank_id = []
+        utc_vec = []
 
         for ii in range(len(coverage_struct["ipix"])):
             data = coverage_struct["data"][ii, :]
@@ -235,11 +271,13 @@ def Observation_plan_multiple(
             prob = np.sum(map_struct["prob"][ipix])
 
             ra, dec = data[0], data[1]
+            mjd_tiles = Time(data[2], format="mjd").iso
             field_id = data[5]
             field_id_vec.append(int(field_id))
             ra_vec.append(ra)
             dec_vec.append(dec)
             grade_vec.append(prob)
+            utc_vec.append(mjd_tiles.encode().decode())
 
         # Store observation in database only if there are tiles
         if field_id_vec:
@@ -254,6 +292,8 @@ def Observation_plan_multiple(
             ra_vec = ra_vec[idx]
             dec_vec = dec_vec[idx]
             grade_vec = grade_vec[idx]
+            utc_vec = np.array(utc_vec)
+            utc_vec = utc_vec[idx]
 
             # Store observation plan with tiles for a given telescope in GRANDMA database
             # Formatting data
@@ -375,6 +415,7 @@ def Observation_plan_multiple(
             ra_vec = ra_vec[:max_nb_tiles]
             dec_vec = dec_vec[:max_nb_tiles]
             grade_vec = grade_vec[:max_nb_tiles]
+            utc_vec = utc_vec[:max_nb_tiles]
             tiles_corners_str = tiles_corners_str[:max_nb_tiles]
             tiles_corners_list = tiles_corners_list[:max_nb_tiles]
             # Create astropy table containing observation plan and telescope name
@@ -386,6 +427,7 @@ def Observation_plan_multiple(
                     ra_vec,
                     dec_vec,
                     grade_vec,
+                    utc_vec,
                     tiles_corners_str,
                     tiles_corners_list,
                 ],
@@ -395,6 +437,7 @@ def Observation_plan_multiple(
                     "RA",
                     "DEC",
                     "Prob",
+                    "Timeobs",
                     "Corners",
                     "Corners_list",
                 ),
@@ -421,15 +464,13 @@ def Observation_plan_multiple(
 
         galaxies_table = ascii.read(filename_gal, format="csv")
 
-    print()
-    print(tiles_tables)
-    print()
-
     # do post-processing optimisation
     for tel in telescopes:
         mxt_table = tiles_tables[tel]
         if mxt_table:
-            names = [name for name in mxt_table.colnames if len(mxt_table[name].shape) <= 1]
+            names = [
+                name for name in mxt_table.colnames if len(mxt_table[name].shape) <= 1
+            ]
             tiles_pdf = mxt_table[names].to_pandas()
             tiles_pdf["prob_sum"] = tiles_pdf["Prob"].to_numpy().cumsum()
             tiles = cluster_data(tiles_pdf, threshold=5.0, start=0)
