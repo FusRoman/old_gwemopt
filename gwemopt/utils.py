@@ -521,7 +521,7 @@ def read_skymap(params, is3D=False, map_struct=None, flat_skymap=None):
             map_struct["prob"] = prob_data
 
             # Handle 3D optional components
-            if all(k in flat_skymap for k in ["DISTMU", "DISTSIGMA", "DISTNORM"]):
+            if all(k in flat_skymap.colnames for k in ["DISTMU", "DISTSIGMA", "DISTNORM"]):
                 map_struct["distmu"] = np.asarray(flat_skymap["DISTMU"])
                 map_struct["distsigma"] = np.asarray(flat_skymap["DISTSIGMA"])
                 map_struct["distnorm"] = np.asarray(flat_skymap["DISTNORM"])
