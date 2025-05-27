@@ -1,6 +1,6 @@
 [project]
 name = "gwemopt"
-version = "0.1.0"
+version = "1.0.0"
 description = "Default template for PDM package"
 dependencies = [
     'numpy>=1.7.1',
